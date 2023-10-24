@@ -11,6 +11,23 @@ async function displayPopularMovies() {
   results.forEach((movie) => {
     const div = document.createElement('div');
     div.classList.add('card');
+    const movieDate = movie.release_date.toString();
+
+    // Create a Date object from the API date string
+    const date = new Date(movieDate);
+
+    // Add one day to the date
+    date.setDate(date.getDate() + 1);
+
+    // Define the desired date format (e.g., "MMM dd, yyyy HH:mm:ss")
+    const options = {
+      year: 'numeric',
+      month: 'long',
+      day: '2-digit',
+    };
+
+    // Format the date according to the defined format
+    const formattedDate = date.toLocaleString('en-US', options);
     div.innerHTML = `        
     <a href="movie-details.html?id=${movie.id}">
     ${
@@ -30,7 +47,7 @@ async function displayPopularMovies() {
     <div class="card-body">
       <h5 class="card-title">${movie.title}</h5>
       <p class="card-text">
-        <small class="text-muted">Release: ${movie.release_date}</small>
+        <small class="text-muted">Release: ${formattedDate}</small>
       </p>
     </div>
   `;
@@ -80,8 +97,29 @@ async function displayMovieDetails() {
   // Use .split to turn "?id=999999" into an array
   const movieId = window.location.search.split('=')[1];
   const movie = await fetchAPIData(`movie/${movieId}`);
-  // new Intl.DateTimeFormat('en-US').format(date)
+
+  // Overlay for background img
+  displayBackgroundImage('movie', movie.backdrop_path);
+
   const div = document.createElement('div');
+  const apiDate = movie.release_date.toString();
+
+  // Create a Date object from the API date string
+  const date = new Date(apiDate);
+
+  // Add one day to the date
+  date.setDate(date.getDate() + 1);
+
+  // Define the desired date format (e.g., "MMM dd, yyyy HH:mm:ss")
+  const options = {
+    year: 'numeric',
+    month: 'short',
+    day: '2-digit',
+  };
+
+  // Format the date according to the defined format
+  const formattedDate = date.toLocaleString('en-US', options);
+
   div.innerHTML = `       <div class="details-top">
   <div>
    ${
@@ -104,40 +142,65 @@ async function displayMovieDetails() {
       <i class="fas fa-star text-primary"></i>
       ${movie.vote_average.toFixed(1)} / 10
     </p>
-    <p class="text-muted">Release Date: ${movie.release_date}</p>
+    <p class="text-muted">Release Date: ${formattedDate}</p>
     <p>
-      Lorem ipsum dolor sit amet consectetur adipisicing elit. Maiores
-      atque molestiae error debitis provident dolore hic odit, impedit
-      sint, voluptatum consectetur assumenda expedita perferendis
-      obcaecati veritatis voluptatibus. Voluptatum repellat suscipit,
-      quae molestiae cupiditate modi libero dolorem commodi obcaecati!
-      Ratione quia corporis recusandae delectus perspiciatis consequatur
-      ipsam. Cumque omnis ad recusandae.
+     ${movie.overview}
     </p>
     <h5>Genres</h5>
     <ul class="list-group">
-      <li>Genre 1</li>
-      <li>Genre 2</li>
-      <li>Genre 3</li>
+      ${movie.genres.map((genre) => `<li>${genre.name}</li>`).join('')}
     </ul>
-    <a href="#" target="_blank" class="btn">Visit Movie Homepage</a>
+    <a href="${
+      movie.homepage
+    }" target="_blank" class="btn">Visit Movie Homepage</a>
   </div>
 </div>
 <div class="details-bottom">
   <h2>Movie Info</h2>
   <ul>
-    <li><span class="text-secondary">Budget:</span> $1,000,000</li>
-    <li><span class="text-secondary">Revenue:</span> $2,000,000</li>
-    <li><span class="text-secondary">Runtime:</span> 90 minutes</li>
-    <li><span class="text-secondary">Status:</span> Released</li>
+    <li><span class="text-secondary">Budget:</span>  $${addCommas(
+      movie.budget
+    )}</li>
+    <li><span class="text-secondary">Revenue:</span>  $${addCommas(
+      movie.revenue
+    )}</li>
+    <li><span class="text-secondary">Runtime:</span> ${
+      movie.runtime
+    } minutes</li>
+    <li><span class="text-secondary">Status:</span> ${movie.status}</li>
   </ul>
   <h4>Production Companies</h4>
-  <div class="list-group">Company 1, Company 2, Company 3</div>
+  <div class="list-group">${movie.production_companies
+    .map((company) => `<span>${company.name}</span>`)
+    .join(', ')}</div>
 </div>`;
 
   document.querySelector('#movie-details').appendChild(div);
 
   // console.log(movieId);
+  console.log(movie.release_date);
+}
+
+// Display Backdrop On Details Pages
+function displayBackgroundImage(type, backgroundPath) {
+  const overlayDiv = document.createElement('div');
+  overlayDiv.style.backgroundImage = `url(https://image.tmdb.org/t/p/original/${backgroundPath})`;
+  overlayDiv.style.backgroundSize = 'cover';
+  overlayDiv.style.backgroundPosition = 'center';
+  overlayDiv.style.backgroundRepeat = 'no-repeat';
+  overlayDiv.style.height = '100vh';
+  overlayDiv.style.width = '100vw';
+  overlayDiv.style.position = 'absolute';
+  overlayDiv.style.top = '0';
+  overlayDiv.style.left = '0';
+  overlayDiv.style.zIndex = '-1';
+  overlayDiv.style.opacity = '0.4';
+
+  if (type === 'movie') {
+    document.querySelector('#movie-details').appendChild(overlayDiv);
+  } else {
+    document.querySelector('#show-details').appendChild(overlayDiv);
+  }
 }
 
 // Fetch data from TMBD API
@@ -175,6 +238,10 @@ function highlightActiveLink() {
       link.classList.add('active');
     }
   });
+}
+
+function addCommas(num) {
+  return num.toLocaleString();
 }
 
 // Init App
