@@ -63,6 +63,8 @@ async function displayPopularShows() {
   // console.log(results);
   results.forEach((show) => {
     const div = document.createElement('div');
+    const date = new Date(show.first_air_date);
+    const formattedDate = date.toLocaleDateString();
     div.classList.add('card');
     div.innerHTML = `        
     <a href="tv-details.html?id=${show.id}">
@@ -83,7 +85,7 @@ async function displayPopularShows() {
     <div class="card-body">
       <h5 class="card-title">${show.name}</h5>
       <p class="card-text">
-        <small class="text-muted">Air Date: ${show.first_air_date}</small>
+        <small class="text-muted">Air Date: ${formattedDate}</small>
       </p>
     </div>
   `;
@@ -181,6 +183,89 @@ async function displayMovieDetails() {
   console.log(movie.release_date);
 }
 
+// Display show details
+async function displayShowDetails() {
+  // Use .split to turn "?id=999999" into an array
+  const showId = window.location.search.split('=')[1];
+  const show = await fetchAPIData(`tv/${showId}`);
+  // console.log(show);
+  // Overlay for background img
+  displayBackgroundImage('tv', show.backdrop_path);
+
+  const div = document.createElement('div');
+  const apiDate = show.last_air_date.toString();
+
+  // Create a Date object from the API date string
+  const date = new Date(apiDate);
+
+  // Add one day to the date
+  date.setDate(date.getDate() + 1);
+
+  // Define the desired date format (e.g., "MMM dd, yyyy HH:mm:ss")
+  const options = {
+    year: 'numeric',
+    month: 'short',
+    day: '2-digit',
+  };
+
+  // Format the date according to the defined format
+  const formattedDate = date.toLocaleString('en-US', options);
+
+  div.innerHTML = `       <div class="details-top">
+  <div>
+   ${
+     show.poster_path
+       ? `<img
+      src="https://image.tmdb.org/t/p/w500${show.poster_path}" 
+      class="card-img-top"
+      alt="${show.name}"
+    />`
+       : `<img
+    src="images/no-image.jpg"
+    class="card-img-top"
+    alt="${show.name}"
+  />`
+   } 
+  </div>
+  <div>
+    <h2>${show.name}</h2>
+    <p>
+      <i class="fas fa-star text-primary"></i>
+      ${show.vote_average.toFixed(1)} / 10
+    </p>
+    <p class="text-muted">Last Air Date: ${formattedDate}</p>
+    <p>
+     ${show.overview}
+    </p>
+    <h5>Genres</h5>
+    <ul class="list-group">
+      ${show.genres.map((genre) => `<li>${genre.name}</li>`).join('')}
+    </ul>
+    <a href="${
+      show.homepage
+    }" target="_blank" class="btn">Visit Movie Homepage</a>
+  </div>
+</div>
+<div class="details-bottom">
+  <h2>Show Info</h2>
+  <ul>
+    <li><span class="text-secondary">Number Of Episodes:</span>   ${
+      show.number_of_episodes
+    }</li>
+    <li><span class="text-secondary">Last Episode To Air:</span>  ${
+      show.last_episode_to_air.name
+    }</li>
+    <li><span class="text-secondary">Status:</span> ${show.status}</li>
+  </ul>
+  <h4>Production Companies</h4>
+  <div class="list-group">${show.production_companies
+    .map((company) => `<span>${company.name}</span>`)
+    .join(', ')}</div>
+</div>`;
+
+  document.querySelector('#show-details').appendChild(div);
+}
+
 // Display Backdrop On Details Pages
 function displayBackgroundImage(type, backgroundPath) {
   const overlayDiv = document.createElement('div');
@@ -201,6 +286,27 @@ function displayBackgroundImage(type, backgroundPath) {
   } else {
     document.querySelector('#show-details').appendChild(overlayDiv);
   }
+}
+
+// Display Slider Movies
+async function displaySlider() {
+  const { results } = await fetchAPIData('movie/now_playing');
+  // console.log(results);
+
+  results.forEach((movie) => {
+    const div = document.createElement('div');
+    div.classList.add('swiper-slide');
+    div.innerHTML = `
+    <a href="movie-details.html?id=${movie.id}">
+      <img src="https://image.tmdb.org/t/p/w500${movie.poster_path}" alt="${movie.title}" />
+    </a>
+    <h4 class="swiper-rating">
+      <i class="fas fa-star text-secondary"></i> ${movie.vote_average} / 10
+    </h4>
+    `;
+    // Append Div to DOM
+    document.querySelector('.swiper-wrapper').appendChild(div);
+  });
 }
 
 // Fetch data from TMBD API
@@ -249,6 +355,7 @@ function init() {
   switch (global.currentPage) {
     case '/':
     case '/index.html':
+      displaySlider();
       displayPopularMovies();
       // console.log('Home');
       break;
@@ -261,7 +368,8 @@ function init() {
       // console.log('Movie Details');
       break;
     case '/tv-details.html':
-      console.log('TV Details');
+      displayShowDetails();
+      // console.log('TV Details')
       break;
     case '/search.html':
       console.log('Search');
