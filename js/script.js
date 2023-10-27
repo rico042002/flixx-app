@@ -50,7 +50,7 @@ async function displayPopularMovies() {
         : `<img
     src="images/no-image.jpg"
     class="card-img-top"
-    alt="Movie Title"
+    alt="${movie.title}"
   />`
     } 
     </a>
@@ -314,10 +314,60 @@ async function search() {
     // console.log(results);
     if (results.length === 0) {
       showAlert('No results found');
+      return;
     }
+    displaySearchResults(results);
+    // clear search box
+    document.querySelector('#search-term').value = '';
   } else {
     showAlert('Please enter a search term');
   }
+}
+
+function displaySearchResults(results) {
+  results.forEach((result) => {
+    const div = document.createElement('div');
+    div.classList.add('card');
+    // Function to format a date string to MM/dd/yyyy
+    function formatDate(dateString) {
+      const options = { year: 'numeric', month: 'short', day: '2-digit' };
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', options);
+    }
+
+    // get type from global state
+    div.innerHTML = `        
+    <a href="${global.search.type}-details.html?id=${result.id}">
+    ${
+      result.poster_path
+        ? `<img
+      src="https://image.tmdb.org/t/p/w500${result.poster_path}" 
+      class="card-img-top"
+      alt="${global.search.type === 'movie' ? result.title : result.name}"
+    />`
+        : `<img
+    src="images/no-image.jpg"
+    class="card-img-top"
+    alt="${global.search.type === 'movie' ? result.title : result.name}"
+  />`
+    } 
+    </a>
+    <div class="card-body">
+      <h5 class="card-title">${
+        global.search.type === 'movie' ? result.title : result.name
+      }</h5>
+      <p class="card-text">
+        <small class="text-muted">Release: ${
+          global.search.type === 'movie'
+            ? formatDate(result.release_date)
+            : formatDate(result.first_air_date)
+        }</small>
+      </p>
+    </div>
+  `;
+
+    document.querySelector('#search-results').appendChild(div);
+  });
 }
 
 // Display Slider Movies
