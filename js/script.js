@@ -9,7 +9,7 @@ const global = {
     totalResults: 0,
   },
   api: {
-    apiKey: 'b8d74cc0238af3c32a25fe72a48a154e',
+    apiKey: 'f6607083e1a7079dd499add3c8288a18',
     apiUrl: 'https://api.themoviedb.org/3/',
   },
 };
@@ -417,9 +417,9 @@ function displayPagination() {
     displaySearchResults(results);
   });
 
-  // Previous page
+  // Previous Page
   document.querySelector('#prev').addEventListener('click', async () => {
-    // decrement global search page
+    // increment global search page
     global.search.page--;
     // Make a request and get results
     const { results, total_pages } = await searchAPIData();
